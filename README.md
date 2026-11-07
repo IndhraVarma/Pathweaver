@@ -143,8 +143,20 @@ docker compose up --build        # http://localhost:4000
 
 Saved boards persist in the `pathweaver-data` volume.
 
-**Render** — `render.yaml` is a ready blueprint: build with `npm ci && npm run build`, start with
-`npm start`, health check on `/api/health`, and a 1 GB disk mounted at `/var/data` for the store.
+**Vercel (client) + Render (API)** — the split both blueprints are currently written for.
+
+| | Host | Config | Key setting |
+| --- | --- | --- | --- |
+| Client | Vercel | `vercel.json` | `VITE_API_BASE=https://<api>.onrender.com/api` |
+| API | Render | `render.yaml` | `CORS_ORIGIN=https://<app>.vercel.app` |
+
+Two rules make or break it. `VITE_API_BASE` is inlined **at build time**, so changing it needs a
+redeploy, not a restart. And the Vercel project's Root Directory must stay at the repository root —
+the client imports `shared/`, which sits outside `client/`, so a root directory of `client` cannot
+see it.
+
+**Render as a single service** — swap the build command to `npm ci --include=dev && npm run build`
+and drop `CORS_ORIGIN`; the server then serves the built client itself from the same origin.
 
 **Anywhere else** — it is one Node process. Build the client, set `NODE_ENV=production`, and run
 `npm start`; the server serves the bundle from `client/dist` itself, so there is no second service

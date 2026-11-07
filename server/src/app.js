@@ -81,7 +81,10 @@ export function createApp({ store, logger, config }) {
     app.get('/', (req, res) => {
       res.status(200).json({
         service: 'pathfinding-visualizer-api',
-        note: 'Client bundle not built. Run `npm run build`, or use the Vite dev server on port 5173.',
+        mode: 'api-only',
+        note:
+          'No client bundle is served from here. This is expected when the client is hosted ' +
+          'separately (e.g. Vercel). To serve both from this process, run `npm run build`.',
         api: '/api/health',
       });
     });
