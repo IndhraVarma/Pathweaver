@@ -1,96 +1,214 @@
 # Pathweaver
 
-An interactive pathfinding visualizer. Draw walls, pour weighted terrain, and watch six classic
-search algorithms negotiate the same grid — then race all six against one board and compare what
-each one actually cost.
+### Explore pathfinding algorithms. Visualize their decisions. Compare their performance.
 
-- **Client** — React 19 + Vite, no UI framework, no animation library.
-- **API** — Express on Node 22, dependency-light and stateless apart from one JSON file.
-- **Core** — one algorithm module, imported verbatim by both sides, so the animation on screen is
-  the real search replayed rather than a second implementation that might drift.
+An interactive pathfinding visualizer that lets you design grid-based environments, run six classic search algorithms, and compare their behaviour on the same board.
+
+**React 19 · Vite · Node.js · Express**
+
+</div>
 
 ---
 
-## Quick start
+## Overview
+
+Pathweaver is an interactive tool for understanding how pathfinding algorithms explore a search space and find routes through a grid.
+
+Create obstacles, add weighted terrain, choose a search algorithm, and watch its exploration process replay step by step. You can also run all six algorithms against the same board to compare the work each one performs.
+
+The project is built around a shared algorithm core: the client and server import the same implementation, so the visualization replays the actual search result rather than a separate approximation.
+
+### Highlights
+
+- Six pathfinding algorithms with different search strategies and guarantees.
+- Interactive grid editing with walls, weighted terrain, and start/end nodes.
+- Seedable maze and terrain generation.
+- Step-by-step search visualization.
+- Side-by-side algorithm comparison on the same board.
+- Search statistics, including visited cells, path length, path cost, and solve time.
+- Save and reload board scenarios.
+- Browser-side fallback when the API is unavailable.
+- Responsive, keyboard-accessible controls and reduced-motion support.
+
+## Architecture at a Glance
+
+| Layer | Technology | Responsibility |
+|---|---|---|
+| Client | React 19, Vite | Grid interaction, controls, visualization, and replay |
+| API | Node.js 22, Express | Pathfinding requests, scenarios, and run statistics |
+| Shared core | JavaScript modules | Grid rules, algorithms, mazes, and priority queue |
+| Persistence | JSON file | Saved scenarios and run statistics |
+
+The backend is stateless apart from a JSON persistence file. The shared algorithm modules are imported by both the client and server.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 22
+- npm
+- Git
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/<your-username>/pathweaver.git
+cd pathweaver
+```
+
+Replace the example URL with your repository URL.
+
+### 2. Install dependencies
 
 ```bash
 npm install
+```
+
+### 3. Start the development environment
+
+```bash
 npm run dev
 ```
 
-- Client: <http://localhost:5173> (Vite proxies `/api` to the server)
-- API: <http://localhost:4000>
+The development command starts the Express API and Vite development server.
 
-To run it the way production does — one process serving both:
+| Service | Local URL |
+|---|---|
+| Client | http://localhost:5173 |
+| API | http://localhost:4000 |
+
+During development, Vite proxies `/api` requests to the backend.
+
+### 4. Run the production-style server locally
 
 ```bash
-npm run preview     # builds the client, then starts the server on :4000
+npm run preview
 ```
 
-## Scripts
+This command builds the client and starts the server on port `4000`. The Express application serves the built frontend and API from one process.
 
-| Command | Does |
-| --- | --- |
-| `npm run dev` | API with `--watch` and the Vite dev server, side by side |
-| `npm run build` | Builds the client into `client/dist` |
-| `npm start` | Starts the API; serves `client/dist` when it exists |
-| `npm test` | Runs the full suite (`node --test`, no test framework) |
-| `npm run lint` | Syntax-checks the entry points |
+## Available Scripts
 
-## How it fits together
+Run these commands from the repository root.
 
+| Command | Description |
+|---|---|
+| `npm install` | Install project dependencies |
+| `npm run dev` | Start the API and Vite development server |
+| `npm run build` | Build the client into `client/dist` |
+| `npm run preview` | Build the client and start the production-style server |
+| `npm start` | Start the API; serve `client/dist` when available |
+| `npm test` | Run the test suite with Node's built-in test runner |
+| `npm run lint` | Syntax-check the configured entry points |
+
+## How It Works
+
+### Shared algorithm core
+
+The `shared/` directory contains the pathfinding implementation used by both the browser and the API.
+
+```text
+shared/
+├── grid.js          # Grid validation, neighbours, and movement costs
+├── algorithms.js    # Six pathfinding algorithms
+├── mazes.js         # Deterministic, seedable maze generators
+└── heap.js          # Binary min-heap
 ```
-shared/          the algorithm core — imported by BOTH the server and the client
-  grid.js          validation, neighbours, movement cost
-  algorithms.js    A*, Dijkstra, Greedy, BFS, DFS, Bidirectional BFS
-  mazes.js         four deterministic, seedable board generators
-  heap.js          binary min-heap
 
-server/src/      Express API
-  app.js           middleware, routes, static hosting of the built client
-  routes/api.js    every endpoint
-  lib/store.js     atomic JSON persistence for scenarios and run statistics
+The server solves the board and returns the complete node-settlement order. The client replays that order to visualize the search.
 
-client/src/      React client
-  components/      hero, grid, controls, comparison table, saved boards
-  hooks/           board state, and the replay animator
-  lib/             API wrapper with an in-browser fallback
+If the API is unavailable, the client can import the same shared modules and run the algorithm in the browser. The interface indicates when this fallback is being used.
+
+### Efficient animation
+
+The replay system avoids repeatedly re-rendering thousands of grid cells through React.
+
+Each cell registers its DOM node once. During playback, the animation loop updates the cell's `data-state` attribute directly, allowing CSS to handle the visual state transitions. React continues to manage structural classes such as walls, weighted terrain, and endpoints.
+
+This separates application structure from high-frequency animation updates.
+
+## Pathfinding Algorithms
+
+Pathweaver includes six algorithms:
+
+| Algorithm | Informed search | Considers terrain cost | Guarantee |
+|---|---:|---:|---|
+| A* Search | Yes | Yes | Lowest-cost path |
+| Dijkstra's Algorithm | No | Yes | Lowest-cost path |
+| Greedy Best-First Search | Yes | No | No optimality guarantee |
+| Breadth-First Search (BFS) | No | No | Fewest steps |
+| Depth-First Search (DFS) | No | No | No optimality guarantee |
+| Bidirectional BFS | No | No | Fewest steps |
+
+### Weighted terrain
+
+Weighted cells represent more expensive terrain. In the current configuration:
+
+- Ordinary movement costs `1`.
+- Weighted movement costs `8`.
+
+Cost-aware algorithms can account for these values when selecting a route. Unweighted algorithms do not optimize for terrain cost.
+
+### Comparison mode
+
+Comparison mode runs all six algorithms against the same board. This makes it possible to examine differences in:
+
+- Number of nodes explored.
+- Path length.
+- Total path cost.
+- Solve time.
+- Whether the algorithm finds an optimal route under the selected movement rules.
+
+The comparison is useful for observing the trade-offs between informed and uninformed search, as well as cost-aware and unweighted algorithms.
+
+## API Reference
+
+All endpoints use the `/api` base path.
+
+Errors follow a consistent response structure:
+
+```json
+{
+  "error": {
+    "status": 400,
+    "message": "Description of the error",
+    "details": {}
+  }
+}
 ```
 
-**Why a shared core.** A visualizer that reimplements its algorithms in the UI eventually shows you
-something the "real" implementation would not do. Here the server solves the board and returns the
-complete settle order; the client only replays it. If the API is unreachable, the client imports the
-identical module and runs it in the browser, and says so on screen.
+### Endpoints
 
-**Why the animation bypasses React.** Re-rendering a few thousand cells sixty times a second is
-exactly what makes a visualizer feel cheap. Each cell registers its DOM node once, and the replay
-loop writes `data-state` directly onto the element for CSS to style. React still owns the structural
-class — wall, weighted, endpoint — so the two never fight over the same attribute.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Service liveness, uptime, and version |
+| `GET` | `/api/algorithms` | Algorithm and maze catalogue |
+| `POST` | `/api/solve` | Solve a board; optionally compare all six algorithms |
+| `POST` | `/api/maze` | Generate walls or weighted terrain |
+| `GET` | `/api/scenarios` | List saved boards |
+| `POST` | `/api/scenarios` | Save a board with a name |
+| `GET` | `/api/scenarios/:id` | Retrieve a saved board |
+| `DELETE` | `/api/scenarios/:id` | Delete a saved board |
+| `GET` | `/api/stats` | Per-algorithm averages across recorded runs |
 
-## API
+### Solve request example
 
-Base path `/api`. Errors always come back as `{ "error": { "status", "message", "details"? } }`.
+The grid is represented using flat node indices:
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Liveness, uptime, version |
-| `GET` | `/algorithms` | Algorithm and maze catalogue with descriptions |
-| `POST` | `/solve` | Solve a board; `compare: true` runs all six |
-| `POST` | `/maze` | Generate walls or weighted terrain for a board |
-| `GET` | `/scenarios` | List saved boards |
-| `POST` | `/scenarios` | Save the current board under a name |
-| `GET` | `/scenarios/:id` | Fetch one saved board in full |
-| `DELETE` | `/scenarios/:id` | Delete a saved board |
-| `GET` | `/stats` | Per-algorithm averages across every run served |
+```text
+node id = row * number of columns + column
+```
 
-A board is described by flat node indices, where `id = row * cols + col`:
+Example request:
 
 ```bash
 curl -X POST http://localhost:4000/api/solve \
   -H 'Content-Type: application/json' \
   -d '{
-    "rows": 21, "cols": 51,
-    "start": 517, "end": 553,
+    "rows": 21,
+    "cols": 51,
+    "start": 517,
+    "end": 553,
     "walls": [100, 101, 102],
     "weights": [200, 201],
     "allowDiagonal": false,
@@ -98,97 +216,248 @@ curl -X POST http://localhost:4000/api/solve \
   }'
 ```
 
-The response carries `visitedOrder` (the order nodes were settled — this is what gets animated),
-`path`, and `stats` with cells searched, path length, path cost and solve time.
+The response includes:
 
-Grids are capped at 200×200, bodies at 2 MB, and `/api` is rate limited per IP (240 requests/minute
-by default). Weighted ground costs 8 per step against an ordinary step's 1.
+| Field | Description |
+|---|---|
+| `visitedOrder` | Order in which nodes were settled; used for the visualization replay |
+| `path` | Nodes forming the resulting route |
+| `stats` | Search metrics, including explored cells, path length, path cost, and solve time |
 
-## The algorithms
+Set `compare: true` in the request to run all six algorithms against the same board.
 
-| Algorithm | Informed | Reads cost | Guarantee |
-| --- | --- | --- | --- |
-| A* Search | yes | yes | cheapest route |
-| Dijkstra | no | yes | cheapest route |
-| Greedy Best-First | yes | no | none |
-| Breadth-First | no | no | fewest steps |
-| Depth-First | no | no | none |
-| Bidirectional BFS | no | no | fewest steps |
+### API limits
 
-The tests pin the properties that matter: optimal solvers agree on path length, A* never settles more
-nodes than Dijkstra, weighted solvers route around costly ground while unweighted ones plough
-straight through it, and diagonal movement refuses to squeeze between two walls.
+- Maximum grid size: `200 × 200`.
+- Maximum request body size: `2 MB`.
+- API rate limit: `240` requests per minute per IP by default.
+
+The rate limit can be configured using environment variables.
+
+## Project Structure
+
+```text
+pathweaver/
+├── shared/
+│   ├── grid.js
+│   ├── algorithms.js
+│   ├── mazes.js
+│   └── heap.js
+│
+├── server/
+│   └── src/
+│       ├── app.js
+│       ├── routes/
+│       │   └── api.js
+│       └── lib/
+│           └── store.js
+│
+├── client/
+│   └── src/
+│       ├── components/
+│       ├── hooks/
+│       └── lib/
+│
+├── test/
+│   ├── pathfinding.test.mjs
+│   ├── api.test.mjs
+│   ├── board.test.mjs
+│   └── render.test.mjs
+│
+├── .env.example
+├── Dockerfile
+├── compose.yaml
+├── render.yaml
+├── Procfile
+└── package.json
+```
+
+### Key design decisions
+
+**One algorithm implementation**
+
+The client and server import the same algorithm modules. This avoids maintaining separate implementations that could produce different results.
+
+**Replay the actual search**
+
+The server returns the search's settlement order. The client visualizes that result rather than running a second, potentially inconsistent animation algorithm.
+
+**Lightweight persistence**
+
+Saved boards and run statistics are stored in a JSON file. Writes use a temporary file followed by a rename to reduce the risk of partially written data.
+
+**Replaceable storage layer**
+
+Persistence operations are isolated in `server/src/lib/store.js`. The route handlers use the store's public methods, making it the primary replacement point if the project later moves to a database.
 
 ## Configuration
 
-Every setting has a working default; see `.env.example` for the annotated list. The ones that matter
-in production:
+The project provides an annotated `.env.example`. The following settings are particularly relevant when deploying.
 
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `PORT` | `4000` | |
-| `NODE_ENV` | `development` | `production` enables CSP and JSON logging |
-| `DATA_FILE` | `./server/data/store.json` | Point at a mounted volume to keep saved boards |
-| `TRUST_PROXY` | `1` in production | Needed for correct client IPs behind a proxy |
-| `CORS_ORIGIN` | same-origin in production | Only set if you host the client elsewhere |
-| `RATE_LIMIT_MAX` | `240` | Per IP, per window |
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `4000` | Server listening port |
+| `NODE_ENV` | `development` | Runtime environment; production enables CSP and JSON logging |
+| `DATA_FILE` | `./server/data/store.json` | Path to the JSON persistence file |
+| `TRUST_PROXY` | `1` in production | Proxy trust configuration for client IP handling |
+| `CORS_ORIGIN` | Same-origin in production | Allowed client origin when hosting the frontend separately |
+| `RATE_LIMIT_MAX` | `240` | Maximum requests per IP per rate-limit window |
 
-## Deploying
+Defaults are provided, so configuration is not required for a basic local run.
 
-**Docker** — multi-stage build, runs as a non-root user, with a healthcheck:
+## Deployment
+
+Pathweaver can run as a single Node.js service or be hosted with the client and API on separate platforms.
+
+### Option 1: Docker
+
+Build and start the application:
 
 ```bash
-docker compose up --build        # http://localhost:4000
+docker compose up --build
 ```
 
-Saved boards persist in the `pathweaver-data` volume.
+Open:
 
-**Render** — `render.yaml` is a ready blueprint: *New → Blueprint*, point it at the repository, apply.
-It builds with `npm ci --include=dev && npm run build`, starts with `npm start`, health-checks
-`/api/health`, and mounts a 1 GB disk at `/var/data` so saved boards survive a redeploy.
+```text
+http://localhost:4000
+```
 
-The `--include=dev` matters: `NODE_ENV=production` makes npm skip devDependencies, and Vite is one,
-so a plain `npm ci` would fail the build.
+The Docker setup uses a multi-stage build and runs the application as a non-root user. A health check is configured, and the `pathweaver-data` volume is used to persist saved boards and statistics.
 
-Render's free tier does not support disks. To deploy free, remove the `disk:` block and the
-`DATA_FILE` variable — everything still runs, but saved boards and statistics reset on each deploy
-and on the free tier's idle spin-down.
+### Option 2: Render
 
-**Hosting the client separately** (a static host or CDN) is supported but not required: set
-`VITE_API_BASE` to the API's absolute URL when building the client, and `CORS_ORIGIN` to the
-client's origin on the server. The default is the simpler same-origin setup above.
+The repository includes a `render.yaml` blueprint.
 
-**Anywhere else** — it is one Node process. Build the client, set `NODE_ENV=production`, and run
-`npm start`; the server serves the bundle from `client/dist` itself, so there is no second service
-and no CORS to configure. `Procfile` covers Heroku-style platforms.
+1. Push the repository to GitHub.
+2. Open [Render](https://render.com/).
+3. Select **New → Blueprint**.
+4. Connect the repository and apply the blueprint.
 
-### Persistence
+The supplied configuration:
 
-Scenarios and run statistics live in a single JSON file, written atomically (temp file + rename) and
-capped at 200 saved boards and 1000 recorded runs. This keeps the service deployable anywhere with a
-writable directory and no database to provision. If you need multi-replica deployments or real
-query-ability, `server/src/lib/store.js` is the one file to replace — the routes only use its public
-methods.
+- Installs dependencies with `npm ci --include=dev && npm run build`.
+- Starts the application with `npm start`.
+- Uses `/api/health` as the health-check endpoint.
+- Mounts a 1 GB disk at `/var/data`.
+- Stores persistent data on the mounted disk.
 
-The in-memory rate limiter is per-instance for the same reason. Behind more than one replica, move it
-to a shared store.
+**Why install development dependencies during the build?**
 
-## Accessibility and motion
+Vite is a development dependency. When `NODE_ENV=production` causes npm to omit development dependencies, the frontend build cannot run. The configured build command explicitly includes them.
 
-The grid exposes a labelled group with drawing instructions, every run announces its outcome through
-a live region, the replay progress bar is a real `progressbar`, and all controls are reachable and
-focus-visible. `prefers-reduced-motion` collapses the hero animation and the cell transitions.
+**Render free-tier note:** Persistent disks are not available on Render's free tier. If deploying without a disk, remove the `disk` configuration and the `DATA_FILE` setting that points to `/var/data`. The application can still run, but saved boards and statistics may reset when the instance restarts or spins down.
 
-## Tests
+### Option 3: Separate frontend and API hosting
+
+Hosting the frontend on a static platform or CDN and the API separately is also supported.
+
+Configure the frontend at build time:
+
+```env
+VITE_API_BASE=<your-api-base-url>
+```
+
+Configure the backend:
+
+```env
+CORS_ORIGIN=<your-frontend-origin>
+```
+
+Use the API's absolute URL for `VITE_API_BASE` and the frontend's origin for `CORS_ORIGIN`.
+
+### Option 4: Any Node.js hosting platform
+
+Pathweaver can run on platforms that support a Node.js process and a writable data directory.
+
+1. Install dependencies.
+2. Build the frontend.
+3. Set `NODE_ENV=production`.
+4. Configure a persistent `DATA_FILE` path if saved data must survive restarts.
+5. Run:
+
+```bash
+npm start
+```
+
+The Express server serves the built frontend from `client/dist`, so a separate frontend service is not required. The included `Procfile` supports Heroku-style process configuration.
+
+## Persistence and Scaling
+
+Scenarios and run statistics are stored in a single JSON file.
+
+- Writes use a temporary file and rename operation.
+- The store is capped at 200 saved boards.
+- The store is capped at 1,000 recorded runs.
+- A writable directory is required for persistence.
+
+This approach keeps deployment simple and avoids the need to provision a database for the current project scope.
+
+There are two scaling considerations:
+
+1. **Multiple server replicas:** Each instance would have its own local JSON file unless storage is moved to a shared service.
+2. **Rate limiting:** The current in-memory rate limiter is per instance. Multi-replica deployments should use a shared rate-limit store.
+
+For deployments requiring multiple replicas or richer queries, replace the persistence implementation behind `server/src/lib/store.js` with a shared database or storage service.
+
+## Accessibility and Motion
+
+Accessibility is considered in the grid and application controls:
+
+- The grid exposes a labelled group with drawing instructions.
+- Run outcomes are announced through a live region.
+- Replay progress is exposed using the `progressbar` role.
+- Controls are keyboard accessible and provide visible focus states.
+- `prefers-reduced-motion` reduces the hero animation and cell transitions.
+
+## Testing
+
+Run the complete test suite:
 
 ```bash
 npm test
 ```
 
-39 tests across four files, using only the Node test runner — no test framework to install:
+The project uses Node.js's built-in test runner, so no separate test framework is required.
 
-- `test/pathfinding.test.mjs` — algorithm correctness, optimality, validation, maze determinism
-- `test/api.test.mjs` — every endpoint, error shapes, persistence across a restart, rate limiting
-- `test/board.test.mjs` — the client's grid-fitting and resize-remapping logic
-- `test/render.test.mjs` — server-renders every component (esbuild compiles the JSX) so a crash on
-  first paint fails the build, without needing a browser
+### Test coverage
+
+The supplied project notes report **39 tests across four files**.
+
+| Test file | Coverage |
+|---|---|
+| `test/pathfinding.test.mjs` | Algorithm correctness, optimality, validation, and deterministic maze generation |
+| `test/api.test.mjs` | API endpoints, error responses, persistence across restarts, and rate limiting |
+| `test/board.test.mjs` | Grid fitting and resize-remapping logic |
+| `test/render.test.mjs` | Server-side rendering of components and first-render failures |
+
+The pathfinding tests cover important algorithm properties, including agreement between optimal solvers, A* exploration compared with Dijkstra, weighted-terrain behaviour, and diagonal movement restrictions near walls.
+
+Run the suite in your environment to verify the current test results after making changes.
+
+## Future Enhancements
+
+Potential directions for extending Pathweaver include:
+
+- More search algorithms and heuristic options.
+- Additional maze-generation techniques.
+- Configurable movement costs and terrain types.
+- Export and import of board scenarios.
+- More detailed algorithm comparison and performance reporting.
+- Shared persistence and rate limiting for multi-instance deployments.
+
+These are potential improvements, not features currently claimed as implemented.
+
+## License
+
+Add your chosen license and corresponding `LICENSE` file before publishing the repository.
+
+---
+
+<div align="center">
+
+**Pathweaver** — See how search algorithms find their way.
+
+</div>
+"""
+
