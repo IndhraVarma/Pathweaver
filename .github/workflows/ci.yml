@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Syntax check
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build client
+        run: npm run build
+
+      - name: Smoke-test the production server
+        run: |
+          NODE_ENV=production PORT=4000 npm start &
+          for i in $(seq 1 30); do
+            if curl -fs http://127.0.0.1:4000/api/health > /dev/null; then
+              echo "server is up"
+              curl -fs http://127.0.0.1:4000/ > /dev/null && echo "client is served"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server did not become healthy in time" && exit 1
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t pathweaver:ci .

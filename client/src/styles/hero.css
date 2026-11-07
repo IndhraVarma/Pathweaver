@@ -1,0 +1,507 @@
+/* ------------------------------------------------------------------ *
+ * Header
+ * ------------------------------------------------------------------ */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.5s var(--ease-soft),
+    border-color 0.5s var(--ease-soft),
+    backdrop-filter 0.5s var(--ease-soft);
+}
+
+.site-header--lifted {
+  background: rgba(22, 15, 21, 0.78);
+  backdrop-filter: blur(16px);
+  border-bottom-color: var(--ink-line-soft);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-block: 1.1rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  color: var(--cream);
+}
+
+.wordmark__text {
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.wordmark__text sup {
+  font-size: 0.45em;
+  font-weight: 400;
+  vertical-align: super;
+  margin-left: 0.3em;
+  opacity: 0.75;
+}
+
+.site-nav {
+  display: flex;
+  gap: 2.75rem;
+}
+
+.site-nav__link {
+  position: relative;
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  transition: color 0.35s var(--ease-soft);
+}
+
+.site-nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -0.35rem;
+  width: 100%;
+  height: 1px;
+  background: var(--lilac);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out);
+}
+
+.site-nav__link:hover {
+  color: var(--cream);
+}
+
+.site-nav__link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Hero
+ * ------------------------------------------------------------------ */
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100svh;
+  padding-top: 4.5rem;
+  padding-bottom: 1.6rem;
+  overflow: hidden;
+}
+
+/* The warm plum wash that lifts the object off the background. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 55% at 72% 46%, rgba(94, 52, 122, 0.5), transparent 70%),
+    radial-gradient(45% 40% at 20% 15%, rgba(60, 35, 70, 0.4), transparent 70%);
+  pointer-events: none;
+}
+
+.hero__inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 5rem);
+  flex: 1;
+  padding-block: 1rem;
+}
+
+.hero__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 2.2vw, 2.5rem);
+  max-width: 46rem;
+}
+
+.hero__title {
+  /* Scales with the viewport rather than stopping at a laptop-sized cap,
+   * which is what left wide screens looking half-empty. */
+  font-size: clamp(3.4rem, 7.2vw, 9rem);
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+}
+
+.hero__title .accent {
+  /* Slight optical nudge: the italic serif reads low beside the roman. */
+  display: inline-block;
+  padding-right: 0.08em;
+}
+
+.hero__lede {
+  max-width: 34rem;
+  font-size: clamp(1rem, 0.95vw, 1.3rem);
+  line-height: 1.65;
+  color: var(--cream-dim);
+}
+
+.hero__object {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: min(72vh, 820px);
+}
+
+.hero__footer {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hero__scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  justify-self: center;
+}
+
+.hero__chevron {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--cream-dim);
+  animation: hero-bob 2.4s var(--ease-soft) infinite;
+}
+
+@keyframes hero-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+.hero__index {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.1rem;
+}
+
+.hero__pause {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--ink-line);
+  border-radius: 50%;
+  font-size: 0.6rem;
+  color: var(--cream-dim);
+  transition:
+    border-color 0.35s var(--ease-soft),
+    color 0.35s var(--ease-soft);
+}
+
+.hero__pause:hover {
+  border-color: var(--lilac);
+  color: var(--cream);
+}
+
+/* ------------------------------------------------------------------ *
+ * The orbital object
+ *
+ * Each ring is a conic gradient disc with its middle masked out, tilted in
+ * 3D and set drifting. `--spin` lets every ring share one keyframe set at
+ * its own tempo, and `orbital--paused` freezes the whole assembly.
+ * ------------------------------------------------------------------ */
+.orbital {
+  position: relative;
+  width: min(100%, 760px);
+  aspect-ratio: 1 / 1.08;
+  display: grid;
+  place-items: center;
+  perspective: 1100px;
+  /* Ring thicknesses below are expressed in cqmin so the object keeps its
+   * proportions at any size instead of growing visibly thinner. */
+  container-type: size;
+}
+
+.orbital--paused * {
+  animation-play-state: paused !important;
+}
+
+.orbital__glow {
+  position: absolute;
+  width: 66%;
+  height: 66%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(150, 97, 196, 0.55), transparent 65%);
+  filter: blur(42px);
+}
+
+/* The wide, nearly-black arc that frames the object. */
+.orbital__arc {
+  position: absolute;
+  top: 2%;
+  width: 86%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 200deg,
+    rgba(12, 8, 12, 0.95),
+    rgba(52, 36, 56, 0.9) 22%,
+    rgba(14, 10, 14, 0.95) 48%,
+    rgba(10, 7, 10, 0) 58%,
+    rgba(10, 7, 10, 0) 92%,
+    rgba(12, 8, 12, 0.95)
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 7.5cqmin), #000 calc(100% - 7.3cqmin));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7.5cqmin), #000 calc(100% - 7.3cqmin));
+}
+
+.orbital__halo {
+  position: absolute;
+  top: 2%;
+  width: 86%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(176, 130, 214, 0.42);
+  border-radius: 50%;
+  animation: orbital-halo 26s linear infinite;
+}
+
+@keyframes orbital-halo {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbital__bead {
+  position: absolute;
+  width: 3cqmin;
+  height: 3cqmin;
+  border-radius: 50%;
+}
+
+.orbital__bead--silver {
+  top: 50%;
+  right: -1.5cqmin;
+  translate: 0 -50%;
+  background: radial-gradient(circle at 32% 28%, #ffffff, #cfcbd4 45%, #7d7a84);
+  box-shadow: 0 0 14px rgba(226, 222, 230, 0.45);
+}
+
+.orbital__bead--bronze {
+  bottom: 16%;
+  left: -1cqmin;
+  width: 3.7cqmin;
+  height: 3.7cqmin;
+  background: radial-gradient(circle at 32% 28%, #f3d8bb, #c89a72 45%, #7d5a3c);
+  box-shadow: 0 0 16px rgba(200, 154, 114, 0.4);
+}
+
+.orbital__stage {
+  position: relative;
+  width: 72%;
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+  display: grid;
+  place-items: center;
+}
+
+.orbital__ring {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: orbital-drift var(--spin, 30s) linear infinite;
+}
+
+.orbital__torus {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--torus);
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness)),
+    #000 calc(100% - var(--thickness) + 1px)
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness)),
+    #000 calc(100% - var(--thickness) + 1px)
+  );
+  filter: drop-shadow(0 10px 24px rgba(8, 5, 9, 0.6));
+}
+
+/* Gold: warm metal with two highlight passes so it reads as a round section. */
+.orbital__ring--gold-outer {
+  --spin: 34s;
+  transform: rotateX(72deg) rotateZ(-18deg);
+}
+
+.orbital__ring--gold-outer .orbital__torus {
+  --thickness: 4.6cqmin;
+  --torus: conic-gradient(
+    from 140deg,
+    #7a5333,
+    #d8a977 12%,
+    #f6e0c4 22%,
+    #c08f5f 38%,
+    #7c5435 52%,
+    #cfa073 68%,
+    #f3dcbe 78%,
+    #a87c51 90%,
+    #7a5333
+  );
+}
+
+.orbital__ring--gold-inner {
+  --spin: 26s;
+  transform: rotateX(18deg) rotateY(68deg) rotateZ(12deg);
+}
+
+.orbital__ring--gold-inner .orbital__torus {
+  --thickness: 3.9cqmin;
+  --torus: conic-gradient(
+    from 300deg,
+    #6f4b2e,
+    #c99a69 14%,
+    #f7e3c8 26%,
+    #b08055 40%,
+    #744f32 55%,
+    #c89a6c 72%,
+    #f2dab9 84%,
+    #6f4b2e
+  );
+}
+
+/* Silver: cooler, brighter, slightly thicker — the ring nearest the viewer. */
+.orbital__ring--silver {
+  --spin: 44s;
+  transform: rotateX(58deg) rotateY(-32deg) rotateZ(26deg);
+}
+
+.orbital__ring--silver .orbital__torus {
+  --thickness: 5.4cqmin;
+  --torus: conic-gradient(
+    from 220deg,
+    #6d6a73,
+    #cfcbd4 10%,
+    #ffffff 20%,
+    #a9a5af 34%,
+    #6b6872 48%,
+    #c6c2cb 64%,
+    #fdfcff 74%,
+    #908d98 88%,
+    #6d6a73
+  );
+}
+
+@keyframes orbital-drift {
+  to {
+    rotate: z 360deg;
+  }
+}
+
+.orbital__core {
+  position: relative;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #e6d2fb, #a97edd 42%, #6b43a0 72%, #4a2b74);
+  box-shadow:
+    0 0 60px rgba(159, 108, 212, 0.65),
+    inset -8px -12px 28px rgba(44, 22, 68, 0.75);
+  animation: orbital-breathe 7s var(--ease-soft) infinite;
+}
+
+@keyframes orbital-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.orbital__plinth {
+  position: absolute;
+  bottom: 2%;
+  width: 46%;
+  height: 11%;
+  border-radius: 50% / 38%;
+  background: linear-gradient(180deg, #4a3a38 0%, #332726 45%, #1d1517 100%);
+  box-shadow: 0 32px 60px rgba(6, 4, 7, 0.75);
+}
+
+.orbital__plinth-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 62%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 35%, #6a534e, #3d2e2d 70%);
+}
+
+/* ------------------------------------------------------------------ *
+ * Hero responsiveness
+ * ------------------------------------------------------------------ */
+@media (max-width: 1080px) {
+  .site-nav {
+    gap: 1.75rem;
+  }
+
+  .hero__inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .hero__copy {
+    align-items: center;
+    order: 2;
+  }
+
+  .hero__object {
+    order: 1;
+    min-height: 0;
+    width: min(100%, 430px);
+  }
+}
+
+@media (max-width: 860px) {
+  .site-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding-top: 4.75rem;
+  }
+
+  .wordmark__text {
+    font-size: 0.95rem;
+  }
+
+  .hero__title {
+    font-size: clamp(2.9rem, 13vw, 4rem);
+  }
+
+  .hero__footer {
+    grid-template-columns: 1fr auto;
+    row-gap: 1rem;
+  }
+
+  .hero__scroll {
+    display: none;
+  }
+}

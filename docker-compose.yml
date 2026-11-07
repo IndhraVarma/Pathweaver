@@ -1,0 +1,19 @@
+services:
+  pathweaver:
+    build: .
+    image: pathweaver:latest
+    ports:
+      - '4000:4000'
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATA_FILE: /data/store.json
+      LOG_FORMAT: json
+      APP_VERSION: '1.0.0'
+    volumes:
+      # Saved boards and run statistics outlive the container.
+      - pathweaver-data:/data
+    restart: unless-stopped
+
+volumes:
+  pathweaver-data:

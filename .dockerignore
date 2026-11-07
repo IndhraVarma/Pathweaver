@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+client/dist
+server/data
+.legacy-cra
+.git
+.github
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.md
+test
+Dockerfile
+docker-compose.yml
