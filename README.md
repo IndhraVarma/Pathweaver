@@ -143,20 +143,20 @@ docker compose up --build        # http://localhost:4000
 
 Saved boards persist in the `pathweaver-data` volume.
 
-**Vercel (client) + Render (API)** — the split both blueprints are currently written for.
+**Render** — `render.yaml` is a ready blueprint: *New → Blueprint*, point it at the repository, apply.
+It builds with `npm ci --include=dev && npm run build`, starts with `npm start`, health-checks
+`/api/health`, and mounts a 1 GB disk at `/var/data` so saved boards survive a redeploy.
 
-| | Host | Config | Key setting |
-| --- | --- | --- | --- |
-| Client | Vercel | `vercel.json` | `VITE_API_BASE=https://<api>.onrender.com/api` |
-| API | Render | `render.yaml` | `CORS_ORIGIN=https://<app>.vercel.app` |
+The `--include=dev` matters: `NODE_ENV=production` makes npm skip devDependencies, and Vite is one,
+so a plain `npm ci` would fail the build.
 
-Two rules make or break it. `VITE_API_BASE` is inlined **at build time**, so changing it needs a
-redeploy, not a restart. And the Vercel project's Root Directory must stay at the repository root —
-the client imports `shared/`, which sits outside `client/`, so a root directory of `client` cannot
-see it.
+Render's free tier does not support disks. To deploy free, remove the `disk:` block and the
+`DATA_FILE` variable — everything still runs, but saved boards and statistics reset on each deploy
+and on the free tier's idle spin-down.
 
-**Render as a single service** — swap the build command to `npm ci --include=dev && npm run build`
-and drop `CORS_ORIGIN`; the server then serves the built client itself from the same origin.
+**Hosting the client separately** (a static host or CDN) is supported but not required: set
+`VITE_API_BASE` to the API's absolute URL when building the client, and `CORS_ORIGIN` to the
+client's origin on the server. The default is the simpler same-origin setup above.
 
 **Anywhere else** — it is one Node process. Build the client, set `NODE_ENV=production`, and run
 `npm start`; the server serves the bundle from `client/dist` itself, so there is no second service

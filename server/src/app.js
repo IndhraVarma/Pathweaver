@@ -60,7 +60,7 @@ export function createApp({ store, logger, config }) {
 
   // In production the built client is served from this same service.
   const clientDir = path.join(repoRoot, 'client', 'dist');
-  if (fs.existsSync(path.join(clientDir, 'index.html'))) {
+  if (config.serveClient !== false && fs.existsSync(path.join(clientDir, 'index.html'))) {
     app.use(
       express.static(clientDir, {
         index: false,
@@ -83,8 +83,8 @@ export function createApp({ store, logger, config }) {
         service: 'pathfinding-visualizer-api',
         mode: 'api-only',
         note:
-          'No client bundle is served from here. This is expected when the client is hosted ' +
-          'separately (e.g. Vercel). To serve both from this process, run `npm run build`.',
+          'No client bundle is served from here. Run `npm run build` to serve the client from ' +
+          'this process, or use the Vite dev server on port 5173 during development.',
         api: '/api/health',
       });
     });

@@ -26,6 +26,9 @@ export function loadConfig(env = process.env) {
         : ['http://localhost:5173', 'http://127.0.0.1:5173'],
     trustProxy: env.TRUST_PROXY ?? (isProduction ? 1 : false),
     bodyLimit: env.BODY_LIMIT ?? '2mb',
+    // When the client is hosted as its own service or site, this process is
+    // API-only and must not also answer with a stale bundle.
+    serveClient: env.SERVE_CLIENT !== 'false',
     dataFile: env.DATA_FILE ?? path.join(repoRoot, 'server', 'data', 'store.json'),
     rateLimit: {
       windowMs: number(env.RATE_LIMIT_WINDOW_MS, 60_000),
